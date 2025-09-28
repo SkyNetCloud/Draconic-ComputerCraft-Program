@@ -276,10 +276,21 @@ function buttonMain()
     currentMenu = "main"
     MenuText = "MAIN MENU"
     clearMenuArea()
-    local sLength = 4+(string.len("Controls")+1)
+
+    -- Controls button
+    local sLength = 4 + (string.len("Controls") + 1)
     button.setButton("controls", "Controls", buttonControls, 4, 28, sLength, 30, 0, 0, colors.blue)
-    local sLength2 = (sLength+13+(string.len("Output")+1))
-    button.setButton("output", "Output", outputMenu, sLength+13, 28, sLength2, 30, 0, 0, colors.blue)
+
+    -- Output button
+    local sLength2 = sLength + 13 + (string.len("Output") + 1)
+    button.setButton("output", "Output", outputMenu, sLength + 13, 28, sLength2, 30, 0, 0, colors.blue)
+
+    -- Activate Reactor button
+    local sLength3 = sLength2 + 13 + (string.len("Activate Reactor") + 1)
+    button.setButton("activate", "Activate Reactor", function()
+        reactor.activateReactor()
+    end, sLength2 + 13, 28, sLength3, 30, 0, 0, colors.green)
+
     button.screen()
 end
 
@@ -395,78 +406,8 @@ function reactorControl()
     end
 end
 
--- WebSocket functions
-function loadWebSocketUrl()
-    local fileName = "websocket_url.txt"
-    if not fs.exists(fileName) then
-        local file = fs.open(fileName, "w")
-        file.writeLine("ws://localhost:3000")
-        file.close()
-        return "ws://localhost:3000"
-    end
-    local file = fs.open(fileName, "r")
-    local url = file.readLine()
-    file.close()
-    return url
-end
-
-local renderUrl = loadWebSocketUrl()
-
-function connectWebSocket()
-    ws, err = http.websocket(renderUrl)
-    if not ws then
-        print("WebSocket failed: " .. tostring(err))
-        return false
-    end
-    print("Connected to WebSocket!")
-    return true
-end
-
-connectWebSocket()
-
-function sendReactorData()
-    if ws then
-        local ri = reactor.getReactorInfo()
-        if ri then
-            local data = {
-                status = ri.status,
-                temp = ri.temperature,
-                field = math.floor(ri.fieldStrength / ri.maxFieldStrength * 100),
-                fuel = math.floor(100 - (ri.fuelConversion / ri.maxFuelConversion * 100)),
-                outputGate = fluxgate.getSignalLowFlow(),
-                inputGate = inputFluxgate.getSignalLowFlow()
-            }
-            ws.send(textutils.serializeJSON(data))
-        end
-    end
-end
-
-function listenWebSocket()
-    while true do
-        if ws then
-            local msg = ws.receive()
-            if msg then
-                local ok, decoded = pcall(textutils.unserializeJSON, msg)
-                if ok and type(decoded) == "table" then
-                    if decoded.command == "start" then
-                        reactor.activateReactor()
-                    elseif decoded.command == "stop" then
-                        reactor.stopReactor()
-                    elseif decoded.command == "setFlow" and decoded.value then
-                        inputFluxgate.setSignalLowFlow(decoded.value)
-                    end
-                end
-            end
-        else
-            sleep(5)
-            connectWebSocket()
-        end
-        sleep(0.5)
-    end
-end
-
 -- Start everything in parallel
 mon.clear()
 mon.monitor.setTextScale(0.5)
 buttonMain()
-parallel.waitForAny(reactorInfoScreen,reactorControl, button.clickEvent,listenWebSocket)
+parallel.waitForAny(reactorInfoScreen,reactorControl)
