@@ -1,6 +1,6 @@
-local libURL = "https://raw.githubusercontent.com/StormFusions/Draconic-ComputerCraft-Program/main/lib/f.lua"
-local libURL2 = "https://raw.githubusercontent.com/StormFusions/Draconic-ComputerCraft-Program/main/lib/button.lua"
-local startupURL = "https://raw.githubusercontent.com/StormFusions/Draconic-ComputerCraft-Program/main/reactor.lua"
+local libURL = "https://raw.githubusercontent.com/SkyNetCloud/Draconic-ComputerCraft-Program/main/lib/f.lua"
+local libURL2 = "https://raw.githubusercontent.com/SkyNetCloud/Draconic-ComputerCraft-Program/main/lib/button.lua"
+local startupURL = "https://raw.githubusercontent.com/SkyNetCloud/Draconic-ComputerCraft-Program/main/reactor.lua"
 local lib, lib2, startup
 local libFile, lib2File, startupFile
  
