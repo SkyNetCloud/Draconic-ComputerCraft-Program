@@ -312,7 +312,6 @@ function reactorInfoScreen()
 
     while true do
         updateReactorInfo()
-        sendReactorData() -- <-- Send data to WebSocket
         sleep(1)
     end
 end
