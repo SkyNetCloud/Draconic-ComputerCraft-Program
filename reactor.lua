@@ -1,3 +1,78 @@
+-- WebSocket setup
+local renderUrl = loadWebSocketUrl() -- or your server URL
+local ws = nil
+
+print("Connecting to WebSocket server at:", renderUrl)
+
+function connectWebSocket()
+    print("Connecting to WebSocket server...")
+    ws, err = http.websocket(renderUrl)
+    if not ws then
+        print("WebSocket failed: " .. tostring(err))
+        return false
+    end
+    print("Connected to WebSocket!")
+    return true
+end
+
+connectWebSocket()
+
+-- Utility: send reactor data
+function sendReactorData()
+    if ws then
+        local ri = reactor.getReactorInfo()
+        if ri then
+            local data = {
+                status = ri.status,
+                temp = ri.temperature,
+                field = math.floor(ri.fieldStrength / ri.maxFieldStrength * 100),
+                fuel = math.floor(100 - (ri.fuelConversion / ri.maxFuelConversion * 100)),
+                outputGate = fluxgate.getSignalLowFlow(),
+                inputGate = inputFluxgate.getSignalLowFlow()
+            }
+            ws.send(textutils.serializeJSON(data))
+        end
+    end
+end
+
+-- WebSocket receive loop
+function listenWebSocket()
+    while true do
+        if ws then
+            local msg = ws.receive()
+            if msg then
+                local decoded = textutils.unserializeJSON(msg)
+                if decoded.command == "start" then
+                    reactor.activateReactor()
+                elseif decoded.command == "stop" then
+                    reactor.stopReactor()
+                elseif decoded.command == "setFlow" then
+                    inputFluxgate.setSignalLowFlow(decoded.value)
+                end
+            end
+        else
+            sleep(5)
+            connectWebSocket()
+        end
+        sleep(0.5)
+    end
+end
+
+function loadWebSocketUrl()
+    local fileName = "websocket_url.txt"
+    if not fs.exists(fileName) then
+        print("No websocket_url.txt found! Creating default file.")
+        local file = fs.open(fileName, "w")
+        file.writeLine("ws://localhost:3000") -- default URL
+        file.close()
+        return "ws://localhost:3000"
+    end
+
+    local file = fs.open(fileName, "r")
+    local url = file.readLine()
+    file.close()
+    return url
+end
 
 os.loadAPI("lib/f")
 os.loadAPI("lib/button")
