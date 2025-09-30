@@ -409,4 +409,4 @@ end
 mon.clear()
 mon.monitor.setTextScale(0.5)
 buttonMain()
-parallel.waitForAny(reactorInfoScreen,reactorControl)
+parallel.waitForAny(reactorInfoScreen, reactorControl, button.clickEvent)
