@@ -285,14 +285,31 @@ function buttonMain()
     local sLength2 = sLength + 13 + (string.len("Output") + 1)
     button.setButton("output", "Output", outputMenu, sLength + 13, 28, sLength2, 30, 0, 0, colors.blue)
 
-    -- Activate Reactor button
-    local sLength3 = sLength2 + 13 + (string.len("Activate Reactor") + 1)
-    button.setButton("activate", "Activate Reactor", function()
-        reactor.activateReactor()
-    end, sLength2 + 13, 28, sLength3, 30, 0, 0, colors.green)
+    -- Reactor state button (Activate or Shutdown)
+    local ri = reactor.getReactorInfo()
+    if ri then
+        if ri.status == "cold" or ri.status == "warming_up" then
+            -- Show Activate button
+            local sLength3 = sLength2 + 13 + (string.len("Activate Reactor") + 1)
+            button.setButton("activate", "Activate Reactor", function()
+                if ri.status == "cold" then
+                    reactor.chargeReactor()
+                elseif ri.status == "warming_up" then
+                    reactor.activateReactor()
+                end
+            end, sLength2 + 13, 28, sLength3, 30, 0, 0, colors.green)
+        elseif ri.status == "running" then
+            -- Show Shutdown button
+            local sLength3 = sLength2 + 13 + (string.len("Shutdown Reactor") + 1)
+            button.setButton("shutdown", "Shutdown Reactor", function()
+                reactor.stopReactor()
+            end, sLength2 + 13, 28, sLength3, 30, 0, 0, colors.red)
+        end
+    end
 
     button.screen()
 end
+
 
 -- Reactor display screen
 local lastValues = {}
